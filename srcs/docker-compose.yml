@@ -1,0 +1,61 @@
+version: "3.8"
+
+services: 
+  mariadb:
+    build: ./services/mariadb/ 
+    image: mariadb:latest   #the image to pull to create the container
+    container_name: mariadb  
+    ports:
+      - "3306:3306"
+    networks:
+      - inception
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - "mariadb:/var/lib/mysql"
+  nginx:
+    build: ./services/nginx/
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    networks:
+      - inception
+    depends_on:
+      - wordpress
+    volumes:
+      - "wordpress:/var/www/wordpress"
+  wordpress:
+    build: ./services/wordpress/
+    image: wordpress
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    container_name: wordpress
+    ports:
+      - "9000:9000"
+    env_file:
+      - .env
+    networks:
+      - inception
+    volumes:
+      - "wordpress:/var/www/wordpress"
+networks:
+    inception:
+      driver: bridge
+volumes:
+    wordpress:
+        driver: local
+        driver_opts:
+            o: bind
+            type: ext4
+            device: /home/mokhames/data/wp
+    mariadb:
+        driver: local
+        driver_opts:
+            o: bind
+            type: ext4
+            device: /home/mokhames/data/db
+  
